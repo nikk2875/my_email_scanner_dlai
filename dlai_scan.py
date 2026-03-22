@@ -5,7 +5,7 @@ from dlai_scanner import connect, fetch_emails, mark_as_read
 from dlai_summarizer import summarize_email
 
 
-def dlai_scan(model=dlai_config.OLLAMA_MODEL, limit=1):
+def dlai_scan(model='ollama', limit=5):
     # Connect to GMAIL and get the e-mails
     print(f"Connecting to Gmail as {dlai_config.GMAIL_ADDRESS}...")
     imap = connect(dlai_config.GMAIL_ADDRESS, dlai_config.GMAIL_APP_PASSWORD)
@@ -22,37 +22,58 @@ def dlai_scan(model=dlai_config.OLLAMA_MODEL, limit=1):
 
     print(f"Found {len(emails)} email(s). Generating summaries...\n")
 
+    if model == 'openai':
+        url = None
+        api_key = dlai_config.openai_api_key
+        model = dlai_config.OPENAI_MODEL
+    if model == 'claude':
+        url = dlai_config.ANTHROPIC_BASE_URL
+        api_key = dlai_config.anthropic_api_key
+        model = dlai_config.ANTHROPIC_MODEL
+    if model == 'gemini':
+        url = dlai_config.GEMINI_BASE_URL
+        api_key = dlai_config.gemini_api_key
+        model = dlai_config.GEMINI_MODEL
+    if model == 'grok':
+        url = dlai_config.GROK_BASE_URL
+        api_key = dlai_config.grok_api_key
+        model = dlai_config.GROK_MODEL
+    if model == 'groq':
+        url = dlai_config.GROQ_BASE_URL
+        api_key = dlai_config.groq_api_key
+        model = dlai_config.GROQ_MODEL
+    if model == 'ollama':
+        url = dlai_config.OLLAMA_BASE_URL
+        api_key = "ollama"
+        model = dlai_config.OLLAMA_MODEL
+
     # Produce e-mails summaries
     results = []
     for i, email_data in enumerate(emails, 1):
-        print(f" E-mail [{i}/{len(emails)}] : {email_data['subject']}")
-        summary = summarize_email(email_data, model)
+        summary = summarize_email(email_data, model, url, api_key)
 
         result = {
-            "model": model,
             "subject": email_data["subject"],
             "date": email_data["date"],
+            "model": model,
+            "scan_date": datetime.now().isoformat(),
             "summary": summary,
         }
         results.append(result)
 
-        print(f"  Date: {email_data['date']}")
-        print(f"  Summary: {summary}")
-        print()
-
     # Save to Markdown
     os.makedirs(dlai_config.OUTPUT_FOLDER, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    output_path = os.path.join(dlai_config.OUTPUT_FOLDER, f"summaries_{timestamp}.md")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_path = os.path.join(dlai_config.OUTPUT_FOLDER, f"dlai_summaries_{timestamp}.md")
 
     lines = [
-        f"**Scanned at:** {datetime.now(timezone.utc).isoformat()}  ",
         f"**Email count:** {len(results)}",
         f"",
     ]
 
     for result in results:
         lines.append(f"## {result['subject']}")
+        lines.append(f"**Scanned at:** {result['scan_date']}")
         lines.append(f"**Date:** {result['date']}")
         lines.append(f"**Model:** {result['model']}")
         lines.append(f"")
@@ -72,4 +93,4 @@ def dlai_scan(model=dlai_config.OLLAMA_MODEL, limit=1):
 
 
 if __name__ == "__main__":
-    dlai_scan(model='ministral-3:14b', limit=5)
+    dlai_scan()

@@ -86,7 +86,7 @@ def parse_email(raw_bytes):
     }
 
 
-def fetch_emails(imap, folder, limit=None):
+def fetch_emails(imap, folder, limit):
     """Fetch unread emails from a folder, sorted newest-first. Returns a list of (uid, parsed_email) tuples."""
     status, _ = imap.select(f'"{folder}"', readonly=True)
     if status != "OK":
