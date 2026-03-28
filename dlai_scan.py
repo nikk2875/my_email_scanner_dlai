@@ -93,4 +93,4 @@ def dlai_scan(model='ollama', limit=5):
 
 
 if __name__ == "__main__":
-    dlai_scan()
+    dlai_scan(model='claude', limit=10)
